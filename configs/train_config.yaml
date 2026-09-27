@@ -1,0 +1,86 @@
+# Training configuration for fruit recognition
+# Used by src/train.py
+
+model:
+  name: "efficientnet_b1"
+  pretrained: true
+  num_classes: 36
+  freeze_base: true
+  dropout: 0.3
+
+data:
+  data_dir: "data"
+  train_split: 0.7
+  val_split: 0.15
+  test_split: 0.15
+  image_size: 224
+  batch_size: 32
+  num_workers: 4
+  pin_memory: true
+
+augmentation:
+  random_resized_crop: true
+  random_horizontal_flip: true
+  random_rotation: 30
+  random_affine:
+    translate: [0.1, 0.1]
+    scale: [0.9, 1.1]
+    shear: 10
+  color_jitter:
+    brightness: 0.2
+    contrast: 0.2
+    saturation: 0.2
+    hue: 0.1
+  random_perspective: 0.3
+  gaussian_blur: 0.3
+  random_grayscale: 0.1
+  random_erasing: 0.3
+
+training:
+  phase1:
+    epochs: 15
+    lr: 1e-3
+    weight_decay: 1e-4
+    freeze_base: true
+  phase2:
+    epochs: 20
+    lr: 1e-5
+    weight_decay: 1e-4
+    freeze_base: false
+    unfreeze_last_n_blocks: 8
+
+optimizer:
+  name: "adamw"
+  betas: [0.9, 0.999]
+  eps: 1e-8
+
+scheduler:
+  name: "cosine_annealing_warm_restarts"
+  T_0: 5
+  T_mult: 2
+  eta_min: 1e-6
+
+loss:
+  name: "cross_entropy"
+  label_smoothing: 0.1
+
+regularization:
+  gradient_clipping: 1.0
+  mixed_precision: true
+  balanced_sampling: true
+
+early_stopping:
+  patience: 7
+  min_delta: 0.001
+  monitor: "val_acc"
+  mode: "max"
+
+checkpoint:
+  save_dir: "models"
+  save_best_only: true
+  save_last: true
+
+evaluation:
+  tta: true
+  tta_transforms: 5
+  metrics: ["accuracy", "precision", "recall", "f1"]
